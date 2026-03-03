@@ -1,0 +1,774 @@
+/*
+ * ════════════════════════════════════════════════════════════════════════════
+ *  Omnimind — Icon Animation System  v2.0
+ *  Neural-themed interactive states for toolbar, sidebar & canvas icons
+ *  States: normal · hover · active/toggled · animated · disabled
+ * ════════════════════════════════════════════════════════════════════════════
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 0  Custom properties — light-mode defaults
+   ───────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Palette */
+  --om-ic-primary:        #1E40AF;
+  --om-ic-primary-mid:    #2563EB;
+  --om-ic-primary-light:  #3B82F6;
+  --om-ic-accent:         #F59E0B;
+  --om-ic-accent-light:   #FBBF24;
+  --om-ic-teal:           #0F766E;
+  --om-ic-teal-light:     #14B8A6;
+  --om-ic-danger:         #EF4444;
+  --om-ic-success:        #10B981;
+
+  /* Glow colours */
+  --om-glow-primary:  rgba(59,  130, 246, 0.55);
+  --om-glow-primary-h:rgba(59,  130, 246, 0.80);
+  --om-glow-accent:   rgba(245, 158,  11, 0.65);
+  --om-glow-accent-h: rgba(245, 158,  11, 0.90);
+  --om-glow-teal:     rgba(20,  184, 166, 0.55);
+  --om-glow-danger:   rgba(239,  68,  68, 0.55);
+  --om-glow-white:    rgba(255, 255, 255, 0.60);
+
+  /* Timing */
+  --om-dur-snap:    90ms;
+  --om-dur-fast:   120ms;
+  --om-dur-base:   160ms;
+  --om-dur-slow:   280ms;
+  --om-ease:       cubic-bezier(0.2,  0,    0.2,  1);
+  --om-ease-out:   cubic-bezier(0,    0,    0.2,  1);
+  --om-ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+  --om-ease-back:  cubic-bezier(0.36, 0,    0.66, -0.56);
+}
+
+/* Dark-mode palette overrides */
+.dark {
+  --om-ic-primary:        #3B82F6;
+  --om-ic-primary-mid:    #60A5FA;
+  --om-ic-primary-light:  #93C5FD;
+  --om-ic-accent:         #FBBF24;
+  --om-ic-accent-light:   #FDE68A;
+  --om-glow-primary:      rgba(96,  165, 250, 0.65);
+  --om-glow-primary-h:    rgba(96,  165, 250, 0.90);
+  --om-glow-accent:       rgba(251, 191,  36, 0.70);
+  --om-glow-accent-h:     rgba(251, 191,  36, 0.95);
+  --om-glow-teal:         rgba(45,  212, 191, 0.60);
+  --om-glow-white:        rgba(255, 255, 255, 0.50);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 1  Keyframes
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Neural fire: action-potential amber burst ── */
+@keyframes om-fire {
+  0%   { filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+  12%  { filter: drop-shadow(0 0 10px rgba(245,158,11,0.92))
+                 drop-shadow(0 0 22px rgba(245,158,11,0.42)); }
+  45%  { filter: drop-shadow(0 0  4px rgba(245,158,11,0.50)); }
+  68%  { filter: drop-shadow(0 0 14px rgba(245,158,11,0.80))
+                 drop-shadow(0 0 30px rgba(245,158,11,0.32)); }
+  100% { filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+}
+
+/* ── Signal flow: data streaming left→right ── */
+@keyframes om-flow {
+  0%   { transform: scale(1.00) translateX( 0px); filter: brightness(1.00) saturate(1.0); }
+  28%  { transform: scale(1.08) translateX( 2px); filter: brightness(1.22) saturate(1.4); }
+  52%  { transform: scale(1.00) translateX( 0px); filter: brightness(1.00) saturate(1.0); }
+  76%  { transform: scale(0.95) translateX(-1px); filter: brightness(0.90) saturate(0.8); }
+  100% { transform: scale(1.00) translateX( 0px); filter: brightness(1.00) saturate(1.0); }
+}
+
+/* ── Heartbeat pulse: training in progress ── */
+@keyframes om-pulse-beat {
+  0%   { transform: scale(1.00); opacity: 1.00; }
+  30%  { transform: scale(1.18); opacity: 0.82; }
+  55%  { transform: scale(0.94); opacity: 0.96; }
+  75%  { transform: scale(1.06); opacity: 0.90; }
+  100% { transform: scale(1.00); opacity: 1.00; }
+}
+
+/* ── Orbit: rotating border ring (processing / spinner) ── */
+@keyframes om-orbit {
+  from { transform: rotate(  0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ── Orbit reverse (for inner segment) ── */
+@keyframes om-orbit-rev {
+  from { transform: rotate(  0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* ── Spark: one-shot completion burst ── */
+@keyframes om-spark {
+  0%   { transform: scale(0.82); filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+  16%  { transform: scale(1.32); filter: drop-shadow(0 0 16px rgba(245,158,11,0.96))
+                                         drop-shadow(0 0 36px rgba(245,158,11,0.48)); }
+  48%  { transform: scale(0.94); filter: drop-shadow(0 0  6px rgba(245,158,11,0.55)); }
+  76%  { transform: scale(1.06); filter: drop-shadow(0 0  3px rgba(245,158,11,0.28)); }
+  100% { transform: scale(1.00); filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+}
+
+/* ── Breathe: idle attention / "look at me" ── */
+@keyframes om-breathe {
+  0%, 100% { transform: scale(1.00); opacity: 1.00; }
+  50%       { transform: scale(1.07); opacity: 0.88; }
+}
+
+/* ── Press flash: click ripple (icon inner) ── */
+@keyframes om-press {
+  0%   { transform: scale(1.00); filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+  22%  { transform: scale(0.86); filter: drop-shadow(0 0  9px rgba(245,158,11,0.82)); }
+  65%  { transform: scale(0.97); filter: drop-shadow(0 0  4px rgba(245,158,11,0.40)); }
+  100% { transform: scale(1.00); filter: drop-shadow(0 0  0px rgba(245,158,11,0.00)); }
+}
+
+/* ── Hover shimmer (subtle hover glow oscillation) ── */
+@keyframes om-hover-shimmer {
+  0%, 100% { filter: drop-shadow(0 0 5px var(--om-glow-primary)); }
+  50%       { filter: drop-shadow(0 0 9px var(--om-glow-primary-h)) brightness(1.06); }
+}
+
+/* ── Signal dash (SVG stroke-dashoffset travel) ── */
+@keyframes om-signal-dash {
+  0%   { stroke-dashoffset: 28; opacity: 0.40; }
+  40%  { opacity: 1.00; }
+  100% { stroke-dashoffset:  0; opacity: 0.40; }
+}
+
+/* ── Gradient sweep (shimmer scan on progress bars / loading states) ── */
+@keyframes om-sweep {
+  0%   { background-position: 100% center; }
+  100% { background-position:  -100% center; }
+}
+
+/* ── Slide in from below (icon reveal) ── */
+@keyframes om-icon-enter {
+  from { opacity: 0; transform: translateY(4px) scale(0.88); }
+  to   { opacity: 1; transform: translateY(0)   scale(1.00); }
+}
+
+/* ── Glow ring pulse (status dots, active indicators) ── */
+@keyframes om-ring-pulse {
+  0%, 100% { box-shadow: 0 0  0px 0px rgba(245,158,11,0.00); }
+  50%       { box-shadow: 0 0  0px 5px rgba(245,158,11,0.35); }
+}
+
+/* ── Badge micro-bounce ── */
+@keyframes om-badge-bounce {
+  0%   { transform: scale(1.00) rotate(0deg); }
+  25%  { transform: scale(1.20) rotate(-6deg); }
+  60%  { transform: scale(0.92) rotate( 3deg); }
+  80%  { transform: scale(1.06) rotate(-2deg); }
+  100% { transform: scale(1.00) rotate( 0deg); }
+}
+
+/* ── Disabled fade-in ── */
+@keyframes om-disable {
+  from { filter: none;          opacity: 1.00; }
+  to   { filter: grayscale(1);  opacity: 0.36; }
+}
+
+/* ── NodePulse: canvas neuron firing ring ── */
+@keyframes om-node-pulse {
+  0% {
+    transform:  scale(0.88);
+    opacity:    0;
+    border-color: rgba(245, 158, 11, 0.00);
+    box-shadow: none;
+  }
+  14% {
+    transform:  scale(1.05);
+    opacity:    1;
+    border-color: rgba(245, 158, 11, 0.92);
+    box-shadow:
+      0 0 0  3px rgba(245, 158, 11, 0.50),
+      0 0 24px rgba(245, 158, 11, 0.35),
+      0 0 48px rgba(245, 158, 11, 0.15),
+      inset 0 0 14px rgba(245, 158, 11, 0.12);
+  }
+  42% {
+    transform:  scale(1.02);
+    border-color: rgba(245, 158, 11, 0.55);
+    box-shadow:
+      0 0 0  2px rgba(245, 158, 11, 0.28),
+      0 0 14px rgba(245, 158, 11, 0.18);
+  }
+  72% {
+    transform:  scale(1.01);
+    border-color: rgba(245, 158, 11, 0.22);
+    box-shadow:
+      0 0 0  1px rgba(245, 158, 11, 0.10),
+      0 0  6px rgba(245, 158, 11, 0.08);
+    opacity: 0.7;
+  }
+  100% {
+    transform:  scale(1.00);
+    border-color: rgba(245, 158, 11, 0.00);
+    box-shadow: none;
+    opacity:    0;
+  }
+}
+
+/* ── AI Scan orbit ring (AIOptimizePanel brain icon) ── */
+
+/*
+ * The AI scan orbit uses a styled ring around the brain icon container.
+ * Unlike button orbit rings, this is larger and uses the accent amber color
+ * with an indigo counter-segment for the Omnimind dual-tone aesthetic.
+ */
+@keyframes om-orbit {
+  from { transform: rotate(  0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes om-orbit-rev {
+  from { transform: rotate(  0deg); }
+  to   { transform: rotate(-360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 2  Base button shell  (.om-btn)
+   ───────────────────────────────────────────────────────────────────────── */
+.om-btn {
+  position:        relative;
+  display:         inline-flex;
+  align-items:     center;
+  justify-content: center;
+  gap:             0.375rem;
+  border-radius:   0.75rem;         /* 12px */
+  border:          1.5px solid transparent;
+  outline:         none;
+  cursor:          pointer;
+  user-select:     none;
+  white-space:     nowrap;
+  font-family:     'Inter', system-ui, sans-serif;
+  font-weight:     600;
+  letter-spacing:  -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color var(--om-dur-base) var(--om-ease),
+    border-color     var(--om-dur-base) var(--om-ease),
+    box-shadow       var(--om-dur-base) var(--om-ease),
+    color            var(--om-dur-base) var(--om-ease),
+    opacity          var(--om-dur-base) var(--om-ease),
+    transform        var(--om-dur-snap) var(--om-ease-spring);
+  transform-origin: center;
+}
+
+/* Keyboard focus ring — amber */
+.om-btn:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 1px rgba(245,158,11,0.80),
+    0 0 0 4px rgba(245,158,11,0.40);
+}
+
+/* Container-level press — tiny shrink for tactile feel */
+.om-btn:active:not(:disabled):not(.om-btn--disabled) {
+  transform: scale(0.94);
+  transition-duration: var(--om-dur-snap);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 3  Inner icon wrap  (.om-btn__icon)
+   — Separate from shell so the glow never clips and text stays stable
+   ───────────────────────────────────────────────────────────────────────── */
+.om-btn__icon {
+  display:          flex;
+  align-items:      center;
+  justify-content:  center;
+  transform-origin: center;
+  will-change:      transform, filter;
+  transition:
+    transform var(--om-dur-base) var(--om-ease-spring),
+    filter    var(--om-dur-base) var(--om-ease);
+}
+
+/* Normal-state drop-shadow tint */
+.om-btn__icon { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.12)); }
+
+/* ── Hover: scale up + primary glow ── */
+.om-btn:hover:not(:disabled):not(.om-btn--disabled) .om-btn__icon {
+  transform: scale(1.14);
+  filter: drop-shadow(0 0 7px var(--om-glow-primary));
+  transition-duration: var(--om-dur-fast);
+}
+
+/* ── Active press: amber flash on the icon ── */
+.om-btn:active:not(:disabled):not(.om-btn--disabled) .om-btn__icon {
+  transform: scale(0.88);
+  filter: drop-shadow(0 0 8px var(--om-glow-accent));
+  transition-duration: var(--om-dur-snap);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 4  Size presets
+   ───────────────────────────────────────────────────────────────────────── */
+/* Icon-only square buttons */
+.om-btn--xs  { width: 1.75rem; height: 1.75rem; font-size: 0.6875rem; padding: 0; }
+.om-btn--sm  { width: 2.00rem; height: 2.00rem; font-size: 0.6875rem; padding: 0; }
+.om-btn--md  { width: 2.25rem; height: 2.25rem; font-size: 0.75rem;   padding: 0; }
+.om-btn--lg  { width: 2.75rem; height: 2.75rem; font-size: 0.8125rem; padding: 0; }
+
+/* Pill buttons (icon + text label) */
+.om-btn--pill-xs { height: 1.75rem; padding: 0 0.50rem; font-size: 0.6875rem; width: auto; }
+.om-btn--pill-sm { height: 2.00rem; padding: 0 0.625rem; font-size: 0.6875rem; width: auto; }
+.om-btn--pill-md { height: 2.25rem; padding: 0 0.75rem;  font-size: 0.75rem;   width: auto; }
+.om-btn--pill-lg { height: 2.75rem; padding: 0 1.00rem;  font-size: 0.8125rem; width: auto; }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 5  Colour / variant classes
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── ghost-header (white-on-dark, for the app header) ── */
+.om-btn--ghost-header {
+  background:    rgba(255,255,255,0.08);
+  border-color:  rgba(255,255,255,0.18);
+  color:         rgba(255,255,255,0.78);
+}
+.om-btn--ghost-header:hover:not(:disabled) {
+  background:   rgba(255,255,255,0.16);
+  border-color: rgba(255,255,255,0.30);
+  color:        #fff;
+  box-shadow:   0 2px 8px rgba(0,0,0,0.18);
+}
+.om-btn--ghost-header .om-btn__icon { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.25)); }
+.om-btn--ghost-header:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 7px var(--om-glow-white));
+  transform: scale(1.14);
+}
+.om-btn--ghost-header:active:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 8px var(--om-glow-accent));
+}
+
+/* ── ghost-light (on white/grey surfaces) ── */
+.om-btn--ghost-light {
+  background:   #fff;
+  border-color: #E2E8F0;
+  color:        #475569;
+  box-shadow:   var(--shadow-xs);
+}
+.om-btn--ghost-light:hover:not(:disabled) {
+  background:   #F5F8FF;
+  border-color: #93C5FD;
+  color:        #1E40AF;
+  box-shadow:   0 0 0 3px rgba(59,130,246,0.12), var(--shadow-sm);
+}
+.dark .om-btn--ghost-light {
+  background:   #1F2937;
+  border-color: rgba(255,255,255,0.10);
+  color:        #94A3B8;
+}
+.dark .om-btn--ghost-light:hover:not(:disabled) {
+  background:   rgba(59,130,246,0.08);
+  border-color: rgba(96,165,250,0.45);
+  color:        #93C5FD;
+  box-shadow:   0 0 0 3px rgba(96,165,250,0.14);
+}
+.om-btn--ghost-light .om-btn__icon { filter: drop-shadow(0 1px 1px rgba(0,0,0,0.06)); }
+
+/* ── primary (indigo) ── */
+.om-btn--primary {
+  background: linear-gradient(135deg, #1E40AF 0%, #2563EB 100%);
+  border-color: #1D4ED8;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(30,64,175,0.38), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+.om-btn--primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #2563EB 0%, #3B82F6 100%);
+  box-shadow: 0 4px 18px rgba(59,130,246,0.58), 0 0 0 1px rgba(59,130,246,0.20);
+}
+.om-btn--primary .om-btn__icon { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.28)); }
+.om-btn--primary:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 8px var(--om-glow-white));
+  transform: scale(1.14);
+}
+.om-btn--primary:active:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.60));
+}
+
+/* ── amber (accent — AI, forward-pass active) ── */
+.om-btn--amber {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  border-color: #D97706;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(245,158,11,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.om-btn--amber:hover:not(:disabled) {
+  background: linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%);
+  box-shadow: 0 4px 20px rgba(245,158,11,0.65), 0 0 0 1px rgba(245,158,11,0.25);
+}
+.om-btn--amber .om-btn__icon { filter: drop-shadow(0 1px 2px rgba(0,0,0,0.22)); }
+.om-btn--amber:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.72));
+  transform: scale(1.14);
+}
+
+/* ── teal (secondary — train model, multiplayer) ── */
+.om-btn--teal {
+  background: linear-gradient(135deg, #0F766E 0%, #0D9488 100%);
+  border-color: #0D9488;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(15,118,110,0.38), inset 0 1px 0 rgba(255,255,255,0.10);
+}
+.om-btn--teal:hover:not(:disabled) {
+  background: linear-gradient(135deg, #0D9488 0%, #14B8A6 100%);
+  box-shadow: 0 4px 18px rgba(20,184,166,0.58);
+}
+.om-btn--teal:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 9px var(--om-glow-teal));
+  transform: scale(1.14);
+}
+
+/* ── ghost-amber (amber outline — AI Optimize inactive) ── */
+.om-btn--ghost-amber {
+  background:   rgba(255,255,255,0.08);
+  border-color: rgba(245,158,11,0.52);
+  color:        #FDE68A;
+}
+.om-btn--ghost-amber:hover:not(:disabled) {
+  background:   rgba(245,158,11,0.14);
+  border-color: #F59E0B;
+  color:        #FCD34D;
+  box-shadow:   0 0 0 3px rgba(245,158,11,0.16), 0 3px 12px rgba(245,158,11,0.25);
+}
+.om-btn--ghost-amber:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 7px var(--om-glow-accent));
+  transform: scale(1.14);
+}
+
+/* ── ghost-teal (teal outline — Multiplayer inactive) ── */
+.om-btn--ghost-teal {
+  background:   rgba(255,255,255,0.08);
+  border-color: rgba(20,184,166,0.52);
+  color:        #5EEAD4;
+}
+.om-btn--ghost-teal:hover:not(:disabled) {
+  background:   rgba(20,184,166,0.14);
+  border-color: #14B8A6;
+  color:        #99F6E4;
+  box-shadow:   0 0 0 3px rgba(20,184,166,0.16), 0 3px 12px rgba(20,184,166,0.25);
+}
+.om-btn--ghost-teal:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 7px var(--om-glow-teal));
+  transform: scale(1.14);
+}
+
+/* ── danger (red — clear canvas, destructive) ── */
+.om-btn--danger {
+  background:   transparent;
+  border-color: rgba(239,68,68,0.38);
+  color:        #FCA5A5;
+}
+.om-btn--danger:hover:not(:disabled) {
+  background:   rgba(239,68,68,0.12);
+  border-color: #EF4444;
+  color:        #F87171;
+  box-shadow:   0 0 0 3px rgba(239,68,68,0.14);
+}
+.om-btn--danger:hover:not(:disabled) .om-btn__icon {
+  filter: drop-shadow(0 0 7px var(--om-glow-danger));
+  transform: scale(1.14);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 6  Disabled state
+   ───────────────────────────────────────────────────────────────────────── */
+.om-btn:disabled,
+.om-btn--disabled {
+  cursor:         not-allowed;
+  pointer-events: none;
+  opacity:        0.36;
+  filter:         grayscale(0.65);
+}
+/* Prevent glow / scale on disabled */
+.om-btn:disabled .om-btn__icon,
+.om-btn--disabled .om-btn__icon {
+  transform: none !important;
+  filter:    none !important;
+  animation: none !important;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 7  Animation state classes  (controlled via props / JS)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── anim-fire: neuron activation pulse ── */
+.om-anim-fire .om-btn__icon {
+  animation: om-fire 1.75s ease-in-out infinite;
+}
+
+/* ── anim-flow: forward-propagation signal ── */
+.om-anim-flow .om-btn__icon {
+  animation: om-flow 1.15s ease-in-out infinite;
+}
+
+/* ── anim-pulse: training heartbeat ── */
+.om-anim-pulse .om-btn__icon {
+  animation: om-pulse-beat 1.40s ease-in-out infinite;
+}
+
+/* ── anim-spark: one-shot completion burst ── */
+.om-anim-spark .om-btn__icon {
+  animation: om-spark 0.60s var(--om-ease-spring) forwards;
+}
+
+/* ── anim-breathe: idle "look at me" ── */
+.om-anim-breathe .om-btn__icon {
+  animation: om-breathe 2.60s ease-in-out infinite;
+}
+
+/* ── anim-orbit: spinner ring (shown when processing) ── */
+.om-orbit-ring {
+  position:      absolute;
+  inset:         -3px;
+  border-radius: inherit;
+  border:        1.5px solid transparent;
+  border-top-color:   var(--om-ic-accent);
+  border-right-color: rgba(245,158,11,0.28);
+  animation:     om-orbit 1.10s linear infinite;
+  pointer-events:none;
+}
+/* Second segment (opposite side) */
+.om-orbit-ring-inner {
+  position:      absolute;
+  inset:         -3px;
+  border-radius: inherit;
+  border:        1.5px solid transparent;
+  border-bottom-color: rgba(59,130,246,0.55);
+  border-left-color:   rgba(59,130,246,0.20);
+  animation:     om-orbit-rev 1.80s linear infinite;
+  pointer-events:none;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 8  Sidebar-specific: node badge + category icon
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* Node type badge inside SidebarItem cards */
+.om-node-badge {
+  transform-origin: center;
+  transition:
+    transform   var(--om-dur-base) var(--om-ease-spring),
+    box-shadow  var(--om-dur-base) var(--om-ease);
+  will-change: transform, box-shadow;
+}
+[data-sidebar-item]:hover .om-node-badge {
+  transform:  scale(1.16) rotate(-5deg);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.22) !important;
+}
+[data-sidebar-item]:active .om-node-badge {
+  transform:  scale(0.88) rotate(3deg);
+  transition-duration: var(--om-dur-snap);
+}
+
+/* Category toggle icon (Layers, Zap etc.) */
+.om-cat-icon {
+  display:         inline-flex;
+  align-items:     center;
+  transform-origin:center;
+  transition:
+    transform  var(--om-dur-base) var(--om-ease-spring),
+    color      var(--om-dur-base) var(--om-ease),
+    filter     var(--om-dur-base) var(--om-ease);
+  will-change: transform;
+}
+button:hover  .om-cat-icon { transform: scale(1.22) rotate(-9deg); }
+button:active .om-cat-icon {
+  transform: scale(0.88) rotate(3deg);
+  transition-duration: var(--om-dur-snap);
+}
+
+/* Drag-handle grip dots */
+.om-grip {
+  transition: opacity var(--om-dur-base) var(--om-ease);
+}
+[data-sidebar-item]:hover  .om-grip { opacity: 0.60 !important; }
+[data-sidebar-item]:active .om-grip { opacity: 0.80 !important; }
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 9  Status dot (live indicator)
+   ───────────────────────────────────────────────────────────────────────── */
+.om-status-dot {
+  border-radius: 9999px;
+  transition: background-color var(--om-dur-slow) var(--om-ease);
+}
+.om-status-dot--live {
+  animation: om-ring-pulse 1.60s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 10  Speed pill selector
+   ───────────────────────────────────────────────────────────────────────── */
+.om-speed-pill {
+  transition:
+    background var(--om-dur-fast) var(--om-ease),
+    color      var(--om-dur-fast) var(--om-ease),
+    box-shadow var(--om-dur-fast) var(--om-ease),
+    transform  var(--om-dur-snap) var(--om-ease-spring);
+  transform-origin: center;
+}
+.om-speed-pill:hover:not(.om-speed-pill--active) {
+  transform: scale(1.06);
+}
+.om-speed-pill--active {
+  animation: om-breathe 2.4s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 11  SVG stroke signal (connection lines in canvas)
+   ───────────────────────────────────────────────────────────────────────── */
+.om-signal-path {
+  stroke-dasharray: 7 4;
+  animation: om-signal-dash 0.75s linear infinite;
+  /* GPU-composited: only animates stroke-dashoffset (no layout) */
+  will-change: stroke-dashoffset, opacity;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 12  NodePulse — canvas neuron firing ring
+   ───────────────────────────────────────────────────────────────────────── */
+
+/*
+ * The firing ring is an absolutely-positioned overlay that sits outside the
+ * node body border. It expands outward, peaks with amber glow, then fades —
+ * mimicking an action-potential wave-front spreading from the soma.
+ */
+.om-node-pulse-ring {
+  position:       absolute;
+  inset:          -5px;
+  border-radius:  17px;           /* node rounded-xl (12px) + 5px outset */
+  border:         2px solid rgba(245, 158, 11, 0);
+  pointer-events: none;
+  z-index:        25;             /* above body (z-10), below toolbar (z-50) */
+  will-change:    transform, opacity, box-shadow;
+  animation:      om-node-pulse 0.72s cubic-bezier(0.34, 1.25, 0.64, 1) forwards;
+}
+
+/* Optional: continuous "om-anim-fire" for nodes (header-level looping) */
+.om-node-fire .om-node-pulse-ring {
+  animation: om-fire 1.75s ease-in-out infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 13  AI Scan orbit ring (AIOptimizePanel brain icon)
+   ───────────────────────────────────────────────────────────────────────── */
+
+/*
+ * The AI scan orbit uses a styled ring around the brain icon container.
+ * Unlike button orbit rings, this is larger and uses the accent amber color
+ * with an indigo counter-segment for the Omnimind dual-tone aesthetic.
+ */
+.om-scan-orbit-outer {
+  position:      absolute;
+  inset:         -6px;
+  border-radius: 18px;            /* rounded-2xl (16px) + 2px */
+  border:        2px solid transparent;
+  border-top-color:    rgba(245, 158, 11, 0.90);
+  border-right-color:  rgba(245, 158, 11, 0.30);
+  animation:     om-orbit 1.05s linear infinite;
+  pointer-events:none;
+  will-change:   transform;
+  /* Amber glow on the active segment */
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.55));
+}
+
+.om-scan-orbit-inner {
+  position:      absolute;
+  inset:         -10px;
+  border-radius: 22px;
+  border:        1.5px solid transparent;
+  border-bottom-color: rgba(99, 102, 241, 0.65);  /* indigo-500 */
+  border-left-color:   rgba(99, 102, 241, 0.22);
+  animation:     om-orbit-rev 1.80s linear infinite;
+  pointer-events:none;
+  will-change:   transform;
+}
+
+/* Orbiting satellite dots — use om-orbit keyframe instead of custom "orbit" */
+.om-scan-dot {
+  position:      absolute;
+  width:         8px;
+  height:        8px;
+  border-radius: 9999px;
+  background:    rgba(245, 158, 11, 0.85);
+  box-shadow:    0 0 6px rgba(245, 158, 11, 0.60);
+  top:           50%;
+  left:          50%;
+  /* orbit at radius ~32px — offset via translateX then rotate */
+  transform-origin: -32px -4px;
+  will-change:   transform;
+  animation:     om-orbit 1.4s linear infinite;
+}
+.om-scan-dot:nth-child(2) { animation-delay: -0.467s; background: rgba(167, 139, 250, 0.80); box-shadow: 0 0 6px rgba(167,139,250,0.55); }
+.om-scan-dot:nth-child(3) { animation-delay: -0.934s; background: rgba(99, 102, 241, 0.75);  box-shadow: 0 0 6px rgba(99,102,241,0.50);  }
+
+/* Phase dot for current scan phase */
+.om-scan-phase-dot {
+  width:         10px;
+  height:        10px;
+  border-radius: 9999px;
+  background:    linear-gradient(135deg, #F59E0B, #FBBF24);
+  box-shadow:    0 0 0 2px rgba(245,158,11,0.25), 0 0 8px rgba(245,158,11,0.40);
+  animation:     om-pulse-beat 1.20s ease-in-out infinite;
+  flex-shrink:   0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   § 14  prefers-reduced-motion — kill ALL motion
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  /* Kill all keyframe animations */
+  .om-btn__icon,
+  .om-anim-fire  .om-btn__icon,
+  .om-anim-flow  .om-btn__icon,
+  .om-anim-pulse .om-btn__icon,
+  .om-anim-spark .om-btn__icon,
+  .om-anim-breathe .om-btn__icon,
+  .om-orbit-ring,
+  .om-orbit-ring-inner,
+  .om-node-badge,
+  .om-cat-icon,
+  .om-status-dot--live,
+  .om-speed-pill--active,
+  .om-signal-path,
+  /* NodePulse */
+  .om-node-pulse-ring,
+  /* AI scan */
+  .om-scan-orbit-outer,
+  .om-scan-orbit-inner,
+  .om-scan-dot,
+  .om-scan-phase-dot {
+    animation:  none !important;
+  }
+  /* Kill transitions on icon wrap — instant state changes only */
+  .om-btn__icon {
+    transition: none !important;
+  }
+  /* Keep instant hover colour changes — no transform / glow */
+  .om-btn:hover:not(:disabled) .om-btn__icon,
+  .om-btn:active:not(:disabled) .om-btn__icon {
+    transform: none   !important;
+    filter:    none   !important;
+  }
+  /* Kill container transform */
+  .om-btn:active:not(:disabled) { transform: none !important; }
+  .om-speed-pill:hover           { transform: none !important; }
+  [data-sidebar-item]:hover .om-node-badge,
+  [data-sidebar-item]:active .om-node-badge { transform: none !important; }
+  button:hover  .om-cat-icon,
+  button:active .om-cat-icon    { transform: none !important; }
+}
